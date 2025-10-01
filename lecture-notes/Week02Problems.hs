@@ -34,8 +34,10 @@ popCount e (x:xs) | x == e = popCount e xs + 1
 -}
 
 insertNoDup :: Ord a => a -> [a] -> [a]
-insertNoDup = undefined
-
+insertNoDup e [] = [e]
+insertNoDup e (x:xs) | e < x = e : x : xs
+                     | e == x = x:xs
+                     | otherwise = x : insertNoDup e xs 
 
 {- 3. Write a version of 'remove' that removes all copies of an element
       from a sorted list, not just the first one. Examples:
@@ -45,8 +47,19 @@ insertNoDup = undefined
 -}
 
 removeAll :: Ord a => a -> [a] -> [a]
-removeAll = undefined
+removeAll e [] = []
+removeAll e (x:xs) | x == e = removeAll e xs
+                   | otherwise = x: removeAll e xs
 
+inSort :: Ord a => [a] -> [a]
+inSort [] = []
+inSort (x:xs) = insert x (inSort xs)
+
+quiSort :: Ord a => [a] -> [a]
+quiSort [] = []
+quiSort (x:xs) = quiSort smaller ++ [x] ++ quiSort larger
+ where smaller = [y | y <- xs, y < x]
+       larger = [y | y <- xs, y >= x]
 
 {- 4. Rewrite 'treeFind' and 'treeInsert' to use 'compare' and 'case'
       expressions. -}
