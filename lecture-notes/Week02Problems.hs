@@ -65,10 +65,20 @@ quiSort (x:xs) = quiSort smaller ++ [x] ++ quiSort larger
       expressions. -}
 
 treeFind2 :: Ord k => k -> KV k v -> Maybe v
-treeFind2 = undefined
+treeFind2 k Leaf = Nothing
+treeFind2 k (Node l (k',v') r) = 
+      case compare k k' of
+      LT -> treeFind2 k l
+      EQ -> Just v'
+      GT -> treeFind2 k r
 
 treeInsert2 :: Ord k => k -> v -> KV k v -> KV k v
-treeInsert2 = undefined
+treeInsert2 k v Leaf = Node Leaf (k,v) Leaf
+treeInsert2 k v (Node l (k',v') r) =
+      case compare k k' of
+      LT -> Node (treeInsert2 k v l) (k',v') r
+      EQ -> Node l (k,v) r
+      GT -> Node l (k',v') (treeInsert2 k v r)
 
 
 {- 5. MergeSort is another sorting algorithm that works in the following
@@ -98,7 +108,11 @@ treeInsert2 = undefined
       syntax in a 'where' clause. -}
 
 split :: [a] -> ([a], [a])
-split = undefined
+split [] = ([], [])
+split (x:[])     = ([x],[])
+split (x1:x2:xs) = (x1:odds, x2:evens)
+      where (odds, evens) = split xs
+
 
 {-    'merge' merges two sorted lists into one sorted list. Examples:
 
@@ -107,20 +121,30 @@ split = undefined
 -}
 
 merge :: Ord a => [a] -> [a] -> [a]
-merge = undefined
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys) | x <= y = x : merge xs (y:ys)
+                    | otherwise = y: merge (x:xs) ys
 
 {-    'mergeSort' uses 'split' and 'merge' to implement the merge sort
       algorithm described above. -}
 
 mergeSort :: Ord a => [a] -> [a]
-mergeSort = undefined
-
+mergeSort [] = []
+mergeSort [x] = [x]
+mergeSort xs = merge (mergeSort x1) (mergeSort x2) 
+  where (x1,x2) = split xs
 
 {- 6. Write another version of 'makeChange' that returns all the
       possible ways of making change as a list: -}
 
 makeChangeAll :: [Coin] -> [Coin] -> Int -> [[Coin]]
-makeChangeAll = undefined
+makeChangeAll coins        used 0 = [used]
+makeChangeAll []           used _ = []
+makeChangeAll (coin:coins) used amount 
+  | amount >= coin =
+    makeChangeAll coins (coin:used) (amount - coin) ++ makeChangeAll coins used amount
+  | otherwise = makeChangeAll coins used amount
 
 {- HINT: you don't need a case expression, just a way of appending two
    lists of possibilities. -}
@@ -153,8 +177,7 @@ type Record = [(String,String)]
 -- > lookupField "c" [("a","1"),("b","3")]
 -- returns @Nothing@.
 lookupField :: String -> Record -> Maybe String
-lookupField fieldname record =
-  error "lookupField: not implemented"
+lookupField fieldname [] = 
 
 -- | Given a header listing field names, like:
 --
