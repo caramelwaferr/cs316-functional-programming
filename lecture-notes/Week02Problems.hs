@@ -177,7 +177,9 @@ type Record = [(String,String)]
 -- > lookupField "c" [("a","1"),("b","3")]
 -- returns @Nothing@.
 lookupField :: String -> Record -> Maybe String
-lookupField fieldname [] = 
+lookupField fieldname [] = Nothing
+lookupField fieldname ((fn, v):record) | fieldname == fn = Just v
+                                       | otherwise = lookupField fieldname record 
 
 -- | Given a header listing field names, like:
 --
@@ -194,15 +196,25 @@ lookupField fieldname [] =
 -- If the number of field names in the header does not match the
 -- number of fields in the row, an @Nothing@ should be returned.
 rowToRecord :: [String] -> Row -> Maybe Record
-rowToRecord header row =
-  error "rowToRecord: not implemented"
+rowToRecord [] [] = Just []
+rowToRecord (h:hs) (r:rs) = 
+      case rowToRecord hs rs of     
+            Nothing -> Nothing
+            Just record -> Just ((h,r):record)
+rowToRecord _ _ = Nothing
 
 -- | Given a header listing field names, and a list of rows, converts
 -- each row into a record. See 'rowToRecord' for how individual rows
 -- are converted to records.
 rowsToRecords :: [String] -> [Row] -> Maybe [Record]
-rowsToRecords header rows =
-  error "rowsToRecord: not implemented"
+rowsToRecords header [] = Just []
+rowsToRecords header (lr:lrs) = 
+      case rowsToRecords header lrs of
+            Nothing -> Nothing
+            Just records -> 
+                  case rowToRecord header lr of
+                  Nothing -> Nothing
+                  Just record -> Just (record:records)
 
 -- | Given a header listing field names, like:
 --
@@ -226,12 +238,24 @@ rowsToRecords header rows =
 -- This function returns an @Nothing@ if any of the field names listed in
 -- the header are not in the record.
 recordToRow :: [String] -> Record -> Maybe Row
-recordToRow header record =
-  error "recordToRow: not implemented"
+recordToRow [] record = Just []
+recordToRow (f:fs) record =
+      case lookupField f record of
+            Nothing -> Nothing
+            Just value -> 
+                  case recordToRow fs record of
+                        Nothing -> Nothing
+                        Just row -> Just (value:row)
 
 -- | Given a header listing field names, and a list of records,
 -- converts each record into a row. See 'recordToRow' for how
 -- individual records are converted to rows.
 recordsToRows :: [String] -> [Record] -> Maybe [Row]
-recordsToRows header records =
-  error "recordsToRows: not implemented"
+recordsToRows header [] = Just []
+recordsToRows header (r:rs) = 
+      case recordToRow header r of
+            Nothing -> Nothing
+            Just row ->
+                  case recordsToRows header rs of
+                        Nothing -> Nothing
+                        Just rows -> Just (row:rows)
