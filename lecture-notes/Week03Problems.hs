@@ -132,11 +132,12 @@ numberOf c = length . (filter (\x -> x == c))
 -}
 
 filter_v2 :: (a -> Bool) -> [a] -> [a]
-filter_v2 = concat . map (\x -> if p x then [x] else [])
+filter_v2 p = concat . map (\x -> if p x then [x] else [])
 
 filterMap :: (a -> Maybe b) -> [a] -> [b]
-filterMap = undefined
-
+filterMap p = concat . map (\x -> case p x of
+                                    Nothing -> []
+                                    Just y  -> [y])
 
 {- 8. Composition
 
@@ -148,9 +149,12 @@ filterMap = undefined
    this week. -}
 
 (>>>) :: (a -> b) -> (b -> c) -> a -> c
-(>>>) = undefined
+(>>>) f g x = g (f x)
 
 {- Try rewriting the 'numberOfEs' function from above using this one. -}
+
+numberOfEs2 :: String -> Int
+numberOfEs2 = onlyEs >>> length
 
 {- 9. Backwards application
 
@@ -159,7 +163,7 @@ filterMap = undefined
    its arguments in reverse order to normal function application! -}
 
 (|>) :: a -> (a -> b) -> b
-(|>) x f = undefined
+(|>) x f = f x
 
 
 {- This function can be used between its arguments like so:
@@ -179,7 +183,7 @@ filterMap = undefined
    arguments in reverse order: -}
 
 flip :: (a -> b -> c) -> b -> a -> c
-flip  = undefined
+flip  f b a = f a b
 
 {- 11. Evaluating Formulas
 
@@ -204,9 +208,10 @@ data Formula
 -}
 
 eval_v1 :: Formula -> Bool
-eval_v1 = undefined
-
-
+eval_v1 (Atom a) = True
+eval_v1 (And p q) = eval_v1 p && eval_v1 q
+eval_v1 (Or p q) = eval_v1 p || eval_v1 q
+eval_v1 (Not p) = not (eval_v1 p)
 
 
 {- (b) Now write a new version of 'eval_v1' that, instead of evaluating
@@ -214,7 +219,10 @@ eval_v1 = undefined
        for each atomic proposition: -}
 
 eval :: (String -> Bool) -> Formula -> Bool
-eval = undefined
+eval v (Atom a) = v a
+eval v (And p q) = eval v p && eval v q
+eval v (Or p q) = eval v p || eval v q
+eval v (Not p) = not (eval v p)
 
 {- For example:
 
@@ -229,7 +237,10 @@ eval = undefined
    formulas in a Formula with whatever 'f' tells it to: -}
 
 subst :: (String -> Formula) -> Formula -> Formula
-subst = undefined
+subst s (Atom a) = s a
+subst s (And p q) = subst s p `And` subst s q
+subst s (Or p q) = subst s p `Or` subst s q
+subst s (Not p) = Not (subst s p)
 
 {- For example:
 
@@ -245,4 +256,22 @@ subst = undefined
    give a 'Bool' for the whole formula. -}
 
 evalMaybe :: (String -> Maybe Bool) -> Formula -> Maybe Bool
-evalMaybe = undefined
+evalMaybe v (Atom a) = v a
+evalMaybe v (And p q) = 
+   case evalMaybe v p of
+      Nothing -> Nothing
+      Just x ->
+         case evalMaybe v q of
+            Nothing -> Nothing
+            Just y -> Just (x && y)
+evalMaybe v (Or p q) =
+      case evalMaybe v p of
+      Nothing -> Nothing
+      Just x ->
+         case evalMaybe v q of
+            Nothing -> Nothing
+            Just y -> Just (x || y)
+evalMaybe v (Not p) =    
+   case evalMaybe v p of
+      Nothing -> Nothing
+      Just x -> Just (not (x))
