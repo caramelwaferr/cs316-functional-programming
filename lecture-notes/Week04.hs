@@ -1,9 +1,9 @@
+
 {-# LANGUAGE ParallelListComp #-}
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 module Week04 where
 
 import Prelude hiding (foldr, foldl, Maybe (..), Left, Right, filter, zip, map, concat)
-import Data.List.Split (splitOn)
 import Data.List hiding (foldr, foldl, filter, map, concat)
 
 {-    Week 04 : PATTERNS OF RECURSION
