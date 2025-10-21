@@ -1,3 +1,4 @@
+
 {-# OPTIONS_GHC -fwarn-incomplete-patterns #-}
 module Week05 where
 
@@ -815,6 +816,7 @@ combineTree (Node l x r) = combineTree l <> x <> combineTree r
 {- We can also "add up" all the elements stored in a "Maybe"
    container. Since "Maybe"s can contain at most one thing, we don't
    need to use 'mappend', but we use 'mempty' for the "Nothing" case. -}
+
 
 combineMaybe :: Monoid m => Maybe m -> m
 combineMaybe Nothing  = mempty

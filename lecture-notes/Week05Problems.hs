@@ -1,3 +1,4 @@
+
 module Week05Problems where
 
 import Data.Foldable
@@ -21,7 +22,7 @@ import Data.Bits (FiniteBits(countLeadingZeros))
 data Host = MkHost String Int
 
 instance Show Host where
-  show = undefined
+  show (MkHost n p) = "{\"name\":\"" ++ n ++ "\", \"port\": " ++ show p ++ "}"
 
 
 
@@ -33,7 +34,8 @@ instance Show Host where
 newtype ClockHour = MkClockHour Int
 
 instance Eq ClockHour where
-  x == y = undefined
+  MkClockHour x == MkClockHour y = 
+    x `mod` 12 == y `mod` 12
 
 {- You should have:
 
@@ -70,11 +72,14 @@ data RoughCount
    What is the 'mempty' that does nothing? -}
 
 instance Semigroup RoughCount where
-  x <> y = undefined
+  Zero <> x = x
+  x <> Zero = One
+  One <> One = Many 
+  Many <> _ = Many
+  _ <> Many = Many
 
 instance Monoid RoughCount where
-  mempty = undefined
-
+  mempty = Zero
 
 
 {- 4. Define Semigroup and Monoid instances for the 'Tree a' data type,
@@ -103,12 +108,14 @@ data Tree a
    function types. -}
 
 instance Semigroup a => Semigroup (Tree a) where
-  x <> y = undefined
+  t <> Leaf = t
+  Leaf <> t = t
+  Node l1 x1 r1 <> Node l2 x2 r2 = Node (l1 <> l2) (x1 <> x2) (r1 <> r2)
 
 {- What is the 'Tree' that combines to no effect by the above rules? -}
 
 instance Semigroup a => Monoid (Tree a) where
-  mempty = undefined
+  mempty = Leaf
 
 
 
@@ -120,10 +127,10 @@ unFun :: Fun a -> (a -> a)
 unFun (MkFun f) = f
 
 instance Semigroup (Fun a) where
-  MkFun f <> MkFun g = undefined
+  MkFun f <> MkFun g = MkFun (f . g)
 
 instance Monoid (Fun a) where
-  mempty = undefined
+  mempty = MkFun id
 
 {- HINT: Think about composition from Week 03. There are /two/ different
    right answers for the Semigroup part.
@@ -150,10 +157,15 @@ unMaybeFun :: MaybeFun a -> a -> Maybe a
 unMaybeFun (MkMaybeFun f) = f
 
 instance Semigroup (MaybeFun a) where
-  MkMaybeFun f <> MkMaybeFun g = undefined
+  MkMaybeFun f <> MkMaybeFun g = MkMaybeFun (composeMaybe f g)
 
 instance Monoid (MaybeFun a) where
-  mempty = undefined
+  mempty = MkMaybeFun (\x -> Just x)
+
+composeMaybe :: (a -> Maybe a) -> (a -> Maybe a) -> (a -> Maybe a)
+composeMaybe f g x = case f x of
+                      Nothing -> Nothing
+                      Just y -> g y
 
 {- HINT: For this one, you'll need to define your own composition of
    functions that may fail, using a 'case'.
@@ -181,7 +193,9 @@ data OneTwoOrThree a
 {-    (a) Define a Functor instance for the OneTwoOrThree type: -}
 
 instance Functor OneTwoOrThree where
-   fmap = undefined
+   fmap f (One_ x) = One_ (f x)
+   fmap f (Two x y) = Two (f x) (f y)
+   fmap f (Three x y z) = Three (f x) (f y) (f z)
 
 {-    You should have:
 
@@ -197,7 +211,9 @@ instance Functor OneTwoOrThree where
 instance Foldable OneTwoOrThree where
   foldMap f = fold . fmap f
 
-  fold = undefined
+  fold (One_ x) = x
+  fold (Two x y) = x <> y
+  fold (Three x y z) = x <> y <> z
 
 {- The following ought to work:
 
@@ -213,7 +229,7 @@ instance Foldable OneTwoOrThree where
       'toList' function. -}
 
 toList :: (Functor c, Foldable c) => c a -> [a]
-toList = undefined
+toList = fold . fmap (\x -> [x])
 
 {- If you only have a 'toList' function for a container can you always
    define 'fold'? -}
@@ -223,7 +239,7 @@ toList = undefined
       number of 'True's in a container full of 'Bool's: -}
 
 roughlyHowTrue :: Foldable c => c Bool -> RoughCount
-roughlyHowTrue = undefined
+roughlyHowTrue = foldMap (\x -> if x then One else Zero)
 
 {- HINT: use 'foldMap' with a function that converts each 'Bool' to a
    'RoughCount' that counts how 'True' it is.
@@ -259,10 +275,10 @@ newtype Sum a = Sum a
 -}
 
 sumAll :: (Foldable c, Num a) => c a -> a
-sumAll = undefined
+sumAll = getSum . foldMap Sum
 
 productAll :: (Foldable c, Num a) => c a -> a
-productAll = undefined
+productAll = getProduct . foldMap Product
 
 {- HINT: the trick is to think in three stages:
     1. Every 'a' in the container needs to be converted to a 'Sum a' (or 'Product a').
@@ -275,7 +291,7 @@ productAll = undefined
        function, similar to the one in the notes. -}
 
 sizeGeneric :: Foldable c => c a -> Int
-sizeGeneric = undefined
+sizeGeneric = getSum . foldMap (\ _ -> Sum 1)
 
 
 {- 12. The standard library module contains definitions to tell Haskell
@@ -293,4 +309,4 @@ instance (Monoid a, Monoid b) => Monoid (a,b) where
 
 average :: Foldable c => c Double -> Double
 average c = total / fromInteger count
-  where (Sum total, Sum count) = undefined -- fill in the 'undefined'
+  where (Sum total, Sum count) = foldMap(\x -> (Sum x, Sum 1)) c -- fill in the 'undefined'
