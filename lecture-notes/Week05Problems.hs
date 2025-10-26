@@ -73,7 +73,7 @@ data RoughCount
 
 instance Semigroup RoughCount where
   Zero <> x = x
-  x <> Zero = One
+  x <> Zero = x
   One <> One = Many 
   Many <> _ = Many
   _ <> Many = Many
