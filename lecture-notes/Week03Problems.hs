@@ -31,6 +31,11 @@ invert False = True
 invert2 :: Bool -> Bool
 invert2 = \x -> if x then False else True
 
+invert3 :: Bool -> Bool
+invert3 = \x -> case x of
+            True -> False
+            False -> True
+
   {- HINT: use a 'case', or an 'if'. -}
 
 
